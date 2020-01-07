@@ -2,28 +2,20 @@
 #include <stdint.h>
 #include <dirent.h>
 
-void read_file(const char* name, uint8_t* contents)
+void read_file(const char* path, uint8_t* contents)
 {
   FILE *fp = NULL;
-
-  fp = fopen(name, "r");
-
+  fp = fopen(path, "r");
   fseek(fp, 0, SEEK_END);
-
-  uintmax_t fileLength = ftell(fp);
-
+  uintmax_t file_length = ftell(fp);
   fseek(fp, 0, SEEK_SET);
-
-  fread(contents, 1, fileLength, fp);
-
+  fread(contents, 1, file_length, fp);
   fclose(fp);
-
   fp = NULL;
 }
 
 int main(void) {
-  // 1. Read layout file
-  uint8_t layout[8192];
+  uint8_t layout[1024];
   read_file("./layout.html", layout);
 
   // 2. Read ./e directory contents
@@ -36,7 +28,7 @@ int main(void) {
 
   DIR *folder;
   struct dirent *entry;
-  int files = 0;
+  int8_t files = 0;
 
   folder = opendir("./e");
   if(folder == NULL)
@@ -54,6 +46,9 @@ int main(void) {
   closedir(folder);
 
   printf("%s", layout);
+
+  printf("\n\n &files = %p", (void *) &files);
+  printf("\n%lu", sizeof(layout));
 
   return 0;
 }
