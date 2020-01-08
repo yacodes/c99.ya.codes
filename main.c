@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include <string.h>
 
-void listdir(const char *name, const char *filepaths[], int i)
+void listdir(const char *name, const char *filepaths[], int *i)
 {
   DIR *dir;
   struct dirent *entry;
@@ -24,8 +24,8 @@ void listdir(const char *name, const char *filepaths[], int i)
       path = strcpy(path, name);
       path = strcat(path, "/");
       path = strcat(path, entry->d_name);
-      filepaths[i] = path;
-      i++;
+      filepaths[*i] = path;
+      *i = *i + 1;
     }
   }
 
@@ -49,12 +49,26 @@ char *read_file(const char *path)
   return content;
 }
 
+struct File {
+  const char *name;
+  const char *title;
+  const char *content;
+  const char *date;
+};
+
 int main(void) {
   /* char *layout = read_file("./layout.html"); */
   /* printf("%s", layout); */
   const char *filepaths[1024];
-  listdir("./e", filepaths, 0);
-  printf("%s", filepaths[0]);
+  int length = 0;
+  listdir("./e", filepaths, &length);
+
+  struct File *pages[length];
+  for (int i = 0; i < length; i++) {
+    struct File f = {read_file(filepaths[i]), "dd", "dfsd", "dsfsdf"};
+    pages[i] = &f;
+    printf("%s", pages[i]->name);
+  }
 
   // 4. Read ./e/**.html files into array of struct {name: "", date: "", title: "", content: ""}
   // 5. Wrap ./e/**.html files contents with layout
