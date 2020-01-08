@@ -1,54 +1,66 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <dirent.h>
+#include <string.h>
 
-void read_file(const char* path, uint8_t* contents)
+void listdir(const char *name, const char *filepaths[], int i)
 {
-  FILE *fp = NULL;
-  fp = fopen(path, "r");
+  DIR *dir;
+  struct dirent *entry;
+
+  if (!(dir = opendir(name)))
+    return;
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_DIR) {
+      char path[1024];
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      snprintf(path, sizeof(path), "%s/%s", name, entry->d_name);
+      listdir(path, filepaths, i);
+    } else {
+      char *path = malloc(strlen(name) + strlen(entry->d_name) + 1);
+      path = strcpy(path, name);
+      path = strcat(path, "/");
+      path = strcat(path, entry->d_name);
+      filepaths[i] = path;
+      i++;
+    }
+  }
+
+  closedir(dir);
+}
+
+char *read_file(const char *path)
+{
+  char *content = 0;
+  long length;
+  FILE *fp = fopen(path, "r");
+
   fseek(fp, 0, SEEK_END);
-  uintmax_t file_length = ftell(fp);
+  length = ftell(fp);
   fseek(fp, 0, SEEK_SET);
-  fread(contents, 1, file_length, fp);
+  content = malloc(length);
+  fread(content, 1, length, fp);
   fclose(fp);
   fp = NULL;
+
+  return content;
 }
 
 int main(void) {
-  uint8_t layout[1024];
-  read_file("./layout.html", layout);
+  /* char *layout = read_file("./layout.html"); */
+  /* printf("%s", layout); */
+  const char *filepaths[1024];
+  listdir("./e", filepaths, 0);
+  printf("%s", filepaths[0]);
 
-  // 2. Read ./e directory contents
-  // 3. Read ./e subdirectories contents
   // 4. Read ./e/**.html files into array of struct {name: "", date: "", title: "", content: ""}
   // 5. Wrap ./e/**.html files contents with layout
   // 6. Compose index.html file
   // 7. Create directory ./build
   // 8. Write all files into ./build directory
-
-  DIR *folder;
-  struct dirent *entry;
-  int8_t files = 0;
-
-  folder = opendir("./e");
-  if(folder == NULL)
-  {
-    perror("Unable to read directory");
-    return(1);
-  }
-
-  while((entry=readdir(folder)))
-  {
-    files++;
-    printf("File %3d: %s\n", files, entry->d_name);
-  }
-
-  closedir(folder);
-
-  printf("%s", layout);
-
-  printf("\n\n &files = %p", (void *) &files);
-  printf("\n%lu", sizeof(layout));
 
   return 0;
 }
